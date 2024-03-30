@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Uploader in database and fetching</title>
+  <script src="https://kit.fontawesome.com/a076d05399.js"></script>
+  <style>
+    body {
+      background-color: #f1f1f1;
+    }
+
+    .container {
+      width: 50%;
+      margin: 0 auto;
+      background-color: #fff;
+      padding: 20px;
+      margin-top: 50px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .container h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      font-size: 18px;
+      font-weight: 500;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 10px;
+      font-size: 18px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    .form-group button {
+      padding: 10px 20px;
+      font-size: 18px;
+      border: 0;
+      background-color: #333;
+      color: #fff;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+
+    .form-group button:hover {
+      background-color: #444;
+    }
+
+    .form-group img {
+      width: 100px;
+      height: 100px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Upload Images</h1>
+    <form id="upload-form" enctype="multipart/form-data">
+      <div class="form-group">
+        <label for="name">Name</label>
+        <input type="text" name="name" id="name">
+      </div>
+      <div class="form-group">
+        <label for="image">Image</label>
+        <input type="file" name="image" id="image">
+      </div>
+      <div class="form-group">
+        <button type="submit" name="submit">Upload</button>
+      </div>
+    </form>
+    <div id="image-container"></div>
+    <button id="last-image-btn">Show Last Uploaded Image</button>
+  </div>
+<script>
+    const uploadForm = document.getElementById('upload-form');
+    const lastImageBtn = document.getElementById('last-image-btn');
+
+    uploadForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const formData = new FormData(uploadForm);
+        
+        try {
+            const response = await fetch('/upload', {
+                method: 'POST',
+                body: formData
+            });
+            if (response.ok) {
+                alert('Image uploaded successfully');
+                uploadForm.reset();
+            } else {
+                alert('Error uploading image');
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Error uploading image');
+        }
+    });
+    lastImageBtn.addEventListener('click', async () => {
+    try {
+        const response = await fetch('/fetch');
+        const images = await response.json();
+        const lastImage = images[images.length - 1];
+
+        const imageContainer = document.getElementById('image-container');
+        imageContainer.innerHTML = '';
+
+        if (lastImage) {
+            const imageElement = document.createElement('div');
+            // Check if 'data' property exists and is defined
+            if (lastImage.data !== undefined) {
+                // Create image element
+                const img = document.createElement('img');
+                // Set the src attribute with the base64 encoded image data
+                img.src = `data:image/jpeg;base64,${lastImage.data}`;
+                img.alt = lastImage.name;
+                // Append the image to the image container
+                imageElement.appendChild(img);
+                // Append image name
+                const nameElement = document.createElement('h3');
+                nameElement.textContent = lastImage.name;
+                imageElement.appendChild(nameElement);
+            } else {
+                // Handle the case when 'data' is undefined
+                imageElement.innerHTML = `
+                    <h3>${lastImage.name}</h3>
+                    <p>No image available</p>
+                `;
+            }
+            imageContainer.appendChild(imageElement);
+        } else {
+            imageContainer.textContent = 'No images found.';
+        }
+    } catch (err) {
+        console.error(err);
+        alert('Error fetching images');
+    }
+});
+
+</script>
+</body>
+</html>
